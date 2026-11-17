@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Интерактив</title>
+  <style>
+    :root {
+      --bg: #090a0d;
+      --card: #13151c;
+      --card-2: #1c1f2a;
+      --border: rgba(255, 255, 255, 0.07);
+      --accent: #3b82f6;
+      --green: #10b981;
+      --text: #f3f4f6;
+      --muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 12px 12px 40px;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      font-size: 15px;
+      line-height: 1.45;
+      color: #e5e7eb;
+    }
+
+    /* 1. Папки-секретки (Открывашки) */
+    .folders-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .folder {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.15s;
+      min-height: 74px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .folder:active {
+      transform: scale(0.96);
+    }
+
+    .folder.open {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: var(--accent);
+    }
+
+    .folder-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .folder-body {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+
+    .folder.open .folder-body {
+      color: #fff;
+    }
+
+    /* 2. Кодовый замок (Сейф) */
+    .safe-display {
+      background: #08090c;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      color: var(--green);
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .num-btn {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 12px 0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .num-btn:active {
+      background: var(--accent);
+      transform: scale(0.94);
+    }
+
+    /* 3. Эквалайзер / Тумблеры (просто потыкать) */
+    .switches-box {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .v-switch {
+      flex: 1;
+      height: 90px;
+      background: #0b0c10;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .v-fill {
+      width: 100%;
+      height: 30%;
+      background: var(--accent);
+      transition: height 0.2s ease, background 0.2s;
+      border-radius: 8px;
+    }
+
+    /* 4. Пупырка (чисто залипалка) */
+    .pop-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+
+    .pop-item {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #232736;
+      border: 2px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 3px 5px rgba(255,255,255,0.12);
+      cursor: pointer;
+      transition: 0.1s;
+    }
+
+    .pop-item.pressed {
+      background: #0e1017;
+      transform: scale(0.88);
+      border-color: var(--accent);
+      box-shadow: inset 0 3px 8px rgba(0,0,0,0.8);
+    }
+
+    /* 5. Доска где можно двигать плашки */
+    .drag-area {
+      height: 165px;
+      background: #0b0c10;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,0.12);
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .chip {
+      position: absolute;
+      padding: 8px 13px;
+      background: var(--card-2);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: grab;
+      touch-action: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .chip:active {
+      border-color: var(--accent);
+      transform: scale(1.07);
+      z-index: 10;
+    }
+
+    /* 6. Стирашка */
+    .scratch-box {
+      position: relative;
+      height: 95px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #181b26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .scratch-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    #scratchCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* 7. Мини-игра: разбей блоки */
+    .blocks-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .brick {
+      height: 40px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .brick.broken {
+      opacity: 0.15;
+      transform: scale(0.85);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Простой текст в начале -->
+    <div class="card">
+      <p class="msg">
+        Короче, Вика, сделал тут прикольную штуку, чисто потыкать с телефона. И хотел сказать, что вы с Таней для меня много значите. С вами всегда легко, чётко и с кайфом.
+      </p>
+    </div>
+
+    <!-- 1. Закрытые карточки (надо нажать чтобы открыть) -->
+    <div class="card">
+      <div class="title-row">
+        <span>Нажми на плашки, чтобы открыть</span>
+        <span id="folderCount">0 / 4</span>
+      </div>
+      <div class="folders-grid">
+        <div class="folder" data-secret="С тобой и Таней всегда с кайфом, вообще без напряга.">
+          <div class="folder-head"><span>📁 Файл #1</span><span>🔒</span></div>
+          <div class="folder-body">Нажми, чтобы открыть</div>
+        </div>
+        <div class="folder" data-secret="Просто знай, что я вас с Таней реально ценю.">
+          <div class="folder-head"><span>📁 Файл #2</span><span>🔒</span></div>
+          <div class="folder-body">Нажми, чтобы открыть</div>
+        </div>
+        <div class="folder" data-secret="Тут ничего нет, просто кнопка ради кнопки 😎">
+          <div class="folder-head"><span>📁 Файл #3</span><span>🔒</span></div>
+          <div class="folder-body">Нажми, чтобы открыть</div>
+        </div>
+        <div class="folder" data-secret="Короче, всего хорошего ⚡">
+          <div class="folder-head"><span>📁 Файл #4</span><span>🔒</span></div>
+          <div class="folder-body">Нажми, чтобы открыть</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Кодовый замок (Пин-код) -->
+    <div class="card">
+      <div class="title-row">
+        <span>Сейф (подсказка: введи 777)</span>
+        <span>🔐</span>
+      </div>
+      <div class="safe-display" id="safeScreen">* * *</div>
+      <div class="numpad">
+        <button class="num-btn" onclick="pressNum('1')">1</button>
+        <button class="num-btn" onclick="pressNum('3')">3</button>
+        <button class="num-btn" onclick="pressNum('7')">7</button>
+        <button class="num-btn" onclick="pressNum('C')">Сброс</button>
+      </div>
+    </div>
+
+    <!-- 3. Доска где можно двигать всё пальцем -->
+    <div class="card">
+      <div class="title-row">
+        <span>Можно двигать пальцем</span>
+        <span>🖐️</span>
+      </div>
+      <div class="drag-area" id="dragArea">
+        <div class="chip" style="top: 15px; left: 15px;">🔥</div>
+        <div class="chip" style="top: 15px; left: 90px;">⚡</div>
+        <div class="chip" style="top: 15px; left: 165px;">🎧</div>
+        <div class="chip" style="top: 68px; left: 25px;">🎲</div>
+        <div class="chip" style="top: 68px; left: 110px;">😎</div>
+        <div class="chip" style="top: 68px; left: 195px;">🚀</div>
+        <div class="chip" style="top: 115px; left: 65px;">Просто подвигать</div>
+      </div>
+    </div>
+
+    <!-- 4. Ползунки-столбики со звуком (чисто потыкать) -->
+    <div class="card">
+      <div class="title-row">
+        <span>Звуковые столбики — потыкай</span>
+        <span>🎛️</span>
+      </div>
+      <div class="switches-box" id="eqBox">
+        <div class="v-switch"><div class="v-fill" style="height: 40%"></div></div>
+        <div class="v-switch"><div class="v-fill" style="height: 70%"></div></div>
+        <div class="v-switch"><div class="v-fill" style="height: 25%"></div></div>
+        <div class="v-switch"><div class="v-fill" style="height: 85%"></div></div>
+        <div class="v-switch"><div class="v-fill" style="height: 50%"></div></div>
+        <div class="v-switch"><div class="v-fill" style="height: 60%"></div></div>
+      </div>
+    </div>
+
+    <!-- 5. Пупырка -->
+    <div class="card">
+      <div class="title-row">
+        <span>Пупырка</span>
+        <span id="popStat">0 / 12</span>
+      </div>
+      <div class="pop-grid" id="popGrid"></div>
+    </div>
+
+    <!-- 6. Разбей плитки -->
+    <div class="card">
+      <div class="title-row">
+        <span>Разбей все блоки</span>
+        <span id="brickReset" style="color: var(--accent); cursor: pointer;">Заново</span>
+      </div>
+      <div class="blocks-grid" id="bricksGrid"></div>
+    </div>
+
+    <!-- 7. Стирашка пальцем -->
+    <div class="card">
+      <div class="title-row">
+        <span>Сотри защитный слой пальцем</span>
+        <span>✨</span>
+      </div>
+      <div class="scratch-box">
+        <div class="scratch-text">
+          Короче, рад что мы общаемся. Вы с Таней реально классные, всё с кайфом.
+        </div>
+        <canvas id="scratchCanvas"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let ctxAudio;
+    function beep(freq = 350, dur = 0.08, type = 'sine') {
+      if (!ctxAudio) ctxAudio = new AudioCtx();
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctxAudio.currentTime);
+      gain.gain.setValueAtTime(0.15, ctxAudio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctxAudio.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start();
+      osc.stop(ctxAudio.currentTime + dur);
+    }
+
+    // 1. Открытие папок
+    let openedFolders = 0;
+    document.querySelectorAll('.folder').forEach(f => {
+      f.addEventListener('click', () => {
+        beep(420, 0.09);
+        if (!f.classList.contains('open')) {
+          f.classList.add('open');
+          f.querySelector('.folder-head span:last-child').textContent = '🔓';
+          f.querySelector('.folder-body').textContent = f.dataset.secret;
+          openedFolders = document.querySelectorAll('.folder.open').length;
+          document.getElementById('folderCount').textContent = `${openedFolders} / 4`;
+        } else {
+          f.classList.remove('open');
+          f.querySelector('.folder-head span:last-child').textContent = '🔒';
+          f.querySelector('.folder-body').textContent = 'Нажми, чтобы открыть';
+          openedFolders = document.querySelectorAll('.folder.open').length;
+          document.getElementById('folderCount').textContent = `${openedFolders} / 4`;
+        }
+      });
+    });
+
+    // 2. Кодовый замок
+    let code = '';
+    const safeScreen = document.getElementById('safeScreen');
+    function pressNum(val) {
+      beep(500, 0.06);
+      if (val === 'C') {
+        code = '';
+        safeScreen.textContent = '* * *';
+        return;
+      }
+      if (code.length < 3) code += val;
+      safeScreen.textContent = code;
+
+      if (code.length === 3) {
+        if (code === '777') {
+          beep(680, 0.2, 'triangle');
+          safeScreen.textContent = 'надеюсь сдадим сессию 🙏';
+        } else {
+          beep(180, 0.2, 'sawtooth');
+          safeScreen.textContent = 'Мимо, жми Сброс';
+        }
+      }
+    }
+
+    // 3. Перетаскивание плашек
+    const area = document.getElementById('dragArea');
+    document.querySelectorAll('.chip').forEach(chip => {
+      let drag = false, sx, sy, il, it;
+      const start = (e) => {
+        drag = true;
+        sx = e.touches ? e.touches[0].clientX : e.clientX;
+        sy = e.touches ? e.touches[0].clientY : e.clientY;
+        il = chip.offsetLeft; it = chip.offsetTop;
+        beep(300, 0.04);
+      };
+      const move = (e) => {
+        if (!drag) return;
+        e.preventDefault();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const maxL = area.clientWidth - chip.offsetWidth - 4;
+        const maxT = area.clientHeight - chip.offsetHeight - 4;
+        chip.style.left = Math.max(4, Math.min(il + (cx - sx), maxL)) + 'px';
+        chip.style.top = Math.max(4, Math.min(it + (cy - sy), maxT)) + 'px';
+      };
+      const end = () => drag = false;
+      chip.addEventListener('mousedown', start);
+      chip.addEventListener('touchstart', start, { passive: false });
+      window.addEventListener('mousemove', move);
+      window.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('mouseup', end);
+      window.addEventListener('touchend', end);
+    });
+
+    // 4. Звуковые столбики
+    const notes = [261, 329, 392, 440, 523, 659];
+    const palette = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ec4899'];
+    document.querySelectorAll('.v-switch').forEach((sw, i) => {
+      sw.addEventListener('pointerdown', () => {
+        const fill = sw.querySelector('.v-fill');
+        const newH = Math.floor(Math.random() * 80) + 20;
+        fill.style.height = newH + '%';
+        fill.style.background = palette[Math.floor(Math.random() * palette.length)];
+        beep(notes[i], 0.14, 'triangle');
+      });
+    });
+
+    // 5. Пупырка
+    const popGrid = document.getElementById('popGrid');
+    const popStat = document.getElementById('popStat');
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'pop-item';
+      p.addEventListener('pointerdown', () => {
+        p.classList.toggle('pressed');
+        beep(p.classList.contains('pressed') ? 280 : 450, 0.06);
+        const count = document.querySelectorAll('.pop-item.pressed').length;
+        popStat.textContent = `${count} / 12`;
+        if (count === 12) {
+          setTimeout(() => {
+            document.querySelectorAll('.pop-item').forEach((el, idx) => {
+              setTimeout(() => el.classList.remove('pressed'), idx * 35);
+            });
+            popStat.textContent = '0 / 12';
+          }, 250);
+        }
+      });
+      popGrid.appendChild(p);
+    }
+
+    // 6. Разбей блоки
+    const bricksGrid = document.getElementById('bricksGrid');
+    const labels = ['Тык', 'Бам', 'Клик', 'Оп', 'Тут', 'Тык', 'Хоп', 'Бах'];
+    function renderBricks() {
+      bricksGrid.innerHTML = '';
+      labels.forEach((txt, i) => {
+        const b = document.createElement('div');
+        b.className = 'brick';
+        b.textContent = txt;
+        b.addEventListener('pointerdown', () => {
+          b.classList.add('broken');
+          beep(300 + i * 40, 0.07, 'square');
+        });
+        bricksGrid.appendChild(b);
+      });
+    }
+    renderBricks();
+    document.getElementById('brickReset').addEventListener('click', renderBricks);
+
+    // 7. Стирашка
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    function initCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      ctx.fillStyle = '#262b3d';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Потри тут пальцем', canvas.width / 2, canvas.height / 2 + 4);
+    }
+    initCanvas();
+
+    let scratching = false;
+    const doScratch = (e) => {
+      if (!scratching) return;
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    canvas.addEventListener('mousedown', () => scratching = true);
+    canvas.addEventListener('touchstart', (e) => { scratching = true; doScratch(e); }, { passive: false });
+    window.addEventListener('mousemove', doScratch);
+    window.addEventListener('touchmove', doScratch, { passive: false });
+    window.addEventListener('mouseup', () => scratching = false);
+    window.addEventListener('touchend', () => scratching = false);
+  </script>
+</body>
+</html>
